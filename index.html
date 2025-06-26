@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Automatic Block Territory Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <img src="railway logo.png" alt="Railway Logo" style="display: block; margin: 0 auto 20px; max-width: 100px; height: auto;">
+    <h2>Automatic Block Territory Quiz</h2>
+    <p style="text-align: center; font-size: 14px; color: #1e3a8a; margin-bottom: 20px;">Designed and developed by Sr DEE Elect(OP) BSP</p>
+
+    <!-- Crew Info Form -->
+    <div id="crew-section">
+      <label>CREW ID: 
+        <input type="text" id="crew-id" pattern="[A-Z0-9]+" title="Crew ID must contain only capital letters and numbers" required />
+      </label>
+      <p id="crew-id-error" style="color: #ef4444; font-size: 14px; display: none;"></p>
+      <button onclick="loadCrew()">Load Details</button>
+      <div id="crew-details" style="display: none;">
+        <p>Name: <span id="crew-name"></span></p>
+        <p>DESG: <span id="crew-desg"></span></p>
+        <p>CLI Name: <span id="cli-name"></span></p>
+        <p>HQ: <span id="hq"></span></p>
+        <button onclick="startQuiz()">Start Quiz</button>
+      </div>
+    </div>
+
+    <!-- Quiz Section -->
+    <div id="quiz-section" style="display: none;">
+      <div id="question-box">
+        <p id="question-text"></p>
+        <div id="options"></div>
+        <p id="answer-feedback"></p>
+        <button id="next-btn" onclick="nextQuestion()">Next</button>
+        <button id="submit-btn" onclick="submitQuiz()" style="display:none;">Submit</button>
+      </div>
+    </div>
+
+    <!-- Result Section -->
+    <div id="result-section" style="display: none;">
+      <h3>Quiz Result</h3>
+      <p id="score"></p>
+      <p id="performance"></p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
