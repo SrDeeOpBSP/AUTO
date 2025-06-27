@@ -129,6 +129,21 @@ button:active {
   background: #f9fafb;
   padding: 10px;
   border-radius: 8px;
+  line-height: 1.6;
+}
+
+/* Dialog */
+#new-crew-dialog label {
+  display: block;
+  margin: 10px 0;
+}
+
+#new-crew-dialog input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
 }
 
 /* Result Section */
@@ -203,5 +218,9 @@ button:active {
 
   h2, h3 {
     font-size: 24px;
+  }
+
+  #new-crew-dialog {
+    width: 90%;
   }
 }

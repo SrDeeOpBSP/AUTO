@@ -10,12 +10,12 @@
   <div class="container">
     <img src="railway logo.png" alt="Railway Logo" style="display: block; margin: 0 auto 20px; max-width: 100px; height: auto;">
     <h2>Automatic Block Territory Quiz</h2>
-    <p style="text-align: center; font-size: 14px; color: #1e3a8a; margin-bottom: 20px;">Designed and developed by Sr DEE Elect(OP) BSP</p>
+    <p style="text-align: center; font-size: 14px; color: #1e3a8a; margin-bottom: 20px;">Designed and developed by Elect(OP) BSP</p>
 
     <!-- Crew Info Form -->
     <div id="crew-section">
       <label>CREW ID: 
-        <input type="text" id="crew-id" pattern="[A-Z0-9]+" title="Crew ID must contain only capital letters and numbers" required />
+        <input type="text" id="crew-id" pattern="[A-Za-z0-9]+" title="Crew ID must contain only letters and numbers" required />
       </label>
       <p id="crew-id-error" style="color: #ef4444; font-size: 14px; display: none;"></p>
       <button onclick="loadCrew()">Load Details</button>
@@ -24,9 +24,22 @@
         <p>DESG: <span id="crew-desg"></span></p>
         <p>CLI Name: <span id="cli-name"></span></p>
         <p>HQ: <span id="hq"></span></p>
-        <button onclick="startQuiz()">Start Quiz</button>
+        <button onclick="startQuiz('USR')">Start USR Quiz</button>
+        <button onclick="startQuiz('ABS')">Start ABS Quiz</button>
       </div>
     </div>
+
+    <!-- Dialog for New Crew -->
+    <div id="new-crew-dialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000;">
+      <h3>Your CREW ID is not in the database</h3>
+      <label>CREW ID: <input type="text" id="dialog-crew-id" readonly /></label><br>
+      <label>CREW NAME: <input type="text" id="dialog-crew-name" required /></label><br>
+      <label>DESG: <input type="text" id="dialog-crew-desg" required /></label><br>
+      <label>CLI NAME: <input type="text" id="dialog-cli-name" required /></label><br>
+      <label>HQ: <input type="text" id="dialog-hq" required /></label><br>
+      <button onclick="submitNewCrew()">Submit</button>
+    </div>
+    <div id="overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;"></div>
 
     <!-- Quiz Section -->
     <div id="quiz-section" style="display: none;">

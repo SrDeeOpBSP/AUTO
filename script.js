@@ -4,13 +4,14 @@ let currentQuestionIndex = 0;
 let score = 0;
 let selectedCrew = {};
 let userAnswers = [];
+let quizType = '';
 
 function loadCrew() {
   const crewIdInput = document.getElementById("crew-id");
-  const crewId = crewIdInput.value.trim();
+  let crewId = crewIdInput.value.trim().toUpperCase(); // Convert to uppercase
   const errorElement = document.getElementById("crew-id-error");
 
-  // Validate Crew ID: only capital letters and numbers
+  // Validate Crew ID: only letters and numbers
   const isValidCrewId = /^[A-Z0-9]+$/.test(crewId);
 
   if (!crewId) {
@@ -21,7 +22,7 @@ function loadCrew() {
   }
 
   if (!isValidCrewId) {
-    errorElement.textContent = "Crew ID must contain only capital letters and numbers!";
+    errorElement.textContent = "Crew ID must contain only letters and numbers!";
     errorElement.style.display = "block";
     crewIdInput.focus();
     return;
@@ -29,6 +30,7 @@ function loadCrew() {
 
   // Clear error message if valid
   errorElement.style.display = "none";
+  crewIdInput.value = crewId; // Update input to show uppercase
 
   Papa.parse("CREW.csv", {
     download: true,
@@ -44,7 +46,10 @@ function loadCrew() {
         document.getElementById("hq").textContent = crew["HQ"];
         document.getElementById("crew-details").style.display = "block";
       } else {
-        alert("Crew ID not found!");
+        // Show dialog for new crew
+        document.getElementById("dialog-crew-id").value = crewId;
+        document.getElementById("new-crew-dialog").style.display = "block";
+        document.getElementById("overlay").style.display = "block";
       }
     },
     error: function () {
@@ -53,12 +58,45 @@ function loadCrew() {
   });
 }
 
-function startQuiz() {
-  Papa.parse("Automatic.csv", {
+function submitNewCrew() {
+  const crewId = document.getElementById("dialog-crew-id").value;
+  const crewName = document.getElementById("dialog-crew-name").value.trim();
+  const crewDesg = document.getElementById("dialog-crew-desg").value.trim();
+  const cliName = document.getElementById("dialog-cli-name").value.trim();
+  const hq = document.getElementById("dialog-hq").value.trim();
+
+  if (!crewName || !crewDesg || !cliName || !hq) {
+    alert("All fields are required!");
+    return;
+  }
+
+  selectedCrew = {
+    CREWID: crewId,
+    "CREW NAME": crewName,
+    DESG: crewDesg,
+    "CLI NAME": cliName,
+    HQ: hq
+  };
+
+  document.getElementById("crew-name").textContent = crewName;
+  document.getElementById("crew-desg").textContent = crewDesg;
+  document.getElementById("cli-name").textContent = cliName;
+  document.getElementById("hq").textContent = hq;
+  document.getElementById("crew-details").style.display = "block";
+  document.getElementById("new-crew-dialog").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
+}
+
+function startQuiz(type) {
+  quizType = type;
+  const csvFile = type === 'USR' ? 'USR.csv' : 'Automatic.csv';
+  const questionCount = type === 'USR' ? 10 : 20;
+
+  Papa.parse(csvFile, {
     download: true,
     header: true,
     complete: function (results) {
-      questionData = shuffleArray(results.data).slice(0, 20);
+      questionData = shuffleArray(results.data).slice(0, questionCount);
       document.getElementById("crew-section").style.display = "none";
       document.getElementById("quiz-section").style.display = "block";
       const quizSection = document.getElementById("quiz-section");
@@ -69,7 +107,7 @@ function startQuiz() {
       showQuestion();
     },
     error: function () {
-      alert("Error loading Automatic.csv file!");
+      alert(`Error loading ${csvFile} file!`);
     }
   });
 }
@@ -88,12 +126,12 @@ function showQuestion() {
     optionsDiv.appendChild(btn);
   });
 
-  document.getElementById("answer-feedback").textContent = "";
+  document.getElementById("answer-feedback").innerHTML = "";
   document.getElementById("next-btn").style.display = "none";
   document.getElementById("submit-btn").style.display = "none";
 
   const progress = document.getElementById("progress");
-  progress.style.width = `${((currentQuestionIndex + 1) / 20) * 100}%`;
+  progress.style.width = `${((currentQuestionIndex + 1) / questionData.length) * 100}%`;
 }
 
 function handleAnswer(q, btn, letter) {
@@ -109,14 +147,18 @@ function handleAnswer(q, btn, letter) {
     explanation: q["Detailed Answer"]
   });
 
+  let feedbackHTML = isCorrect 
+    ? `<span>😊 Correct!</span><br>${q["Detailed Answer"]}`
+    : `<span>😔 Wrong!</span><br>${q["Detailed Answer"]}`;
+
   if (isCorrect) {
     btn.classList.add("correct");
-    document.getElementById("answer-feedback").textContent = "✅ Correct! " + q["Detailed Answer"];
     score++;
   } else {
     btn.classList.add("wrong");
-    document.getElementById("answer-feedback").textContent = "❌ Wrong! " + q["Detailed Answer"];
   }
+
+  document.getElementById("answer-feedback").innerHTML = feedbackHTML;
 
   const buttons = document.querySelectorAll("#options button");
   buttons.forEach(b => {
@@ -126,7 +168,7 @@ function handleAnswer(q, btn, letter) {
     }
   });
 
-  if (currentQuestionIndex === 19) {
+  if (currentQuestionIndex === questionData.length - 1) {
     document.getElementById("submit-btn").style.display = "inline-block";
   } else {
     document.getElementById("next-btn").style.display = "inline-block";
@@ -142,19 +184,19 @@ function submitQuiz() {
   document.getElementById("quiz-section").style.display = "none";
   document.getElementById("result-section").style.display = "block";
 
-  const percentage = (score / 20) * 100;
+  const percentage = (score / questionData.length) * 100;
 
   let remark, feedback;
-  if (score >= 18) {
+  if (score >= questionData.length * 0.9) {
     remark = "🌟 Outstanding Performance";
     feedback = "You have demonstrated exceptional knowledge. Keep up the excellent work!";
-  } else if (score >= 15) {
+  } else if (score >= questionData.length * 0.75) {
     remark = "👍 Very Good";
     feedback = "Great effort! Review the incorrect answers to aim for outstanding next time.";
-  } else if (score >= 12) {
+  } else if (score >= questionData.length * 0.6) {
     remark = "🙂 Satisfactory";
     feedback = "Good attempt, but there's room for improvement. Focus on the areas where you made mistakes.";
-  } else if (score >= 8) {
+  } else if (score >= questionData.length * 0.4) {
     remark = "⚠️ Needs Improvement";
     feedback = "You need to study more. Review the explanations for incorrect answers to improve.";
   } else {
@@ -163,7 +205,7 @@ function submitQuiz() {
   }
 
   let analysisHTML = `
-    <p style="font-size: 24px; font-weight: 600;">Score: ${score}/20 (${percentage.toFixed(2)}%)</p>
+    <p style="font-size: 24px; font-weight: 600;">Score: ${score}/${questionData.length} (${percentage.toFixed(2)}%)</p>
     <p style="font-size: 20px; color: #3b82f6;">${remark}</p>
     <p style="margin-bottom: 20px;">${feedback}</p>
     <h4>Answer Summary:</h4>
@@ -181,10 +223,14 @@ function submitQuiz() {
     `;
   });
 
-  analysisHTML += '</ul>';
+  analysisHTML += `
+    </ul>
+    <button onclick="backToQuiz()">Back to Quiz Page</button>
+  `;
 
   document.getElementById("result-section").innerHTML = analysisHTML;
 
+  const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const payload = {
     CREWID: selectedCrew["CREWID"],
     "CREW NAME": selectedCrew["CREW NAME"],
@@ -192,10 +238,11 @@ function submitQuiz() {
     "CLI NAME": selectedCrew["CLI NAME"],
     HQ: selectedCrew["HQ"],
     "CREW SCORE": score,
-    "PERCENTAGE": percentage.toFixed(2)
+    TYPE: quizType,
+    "TIMESTAMP": timestamp
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbystGGH_m6SBMUlpbOrjLclMnF7wSNtB14mGZqW2QA0z8Q4qJFoh0Sy6UM6mBo1iGXS/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbwoX2DzwPzMdNfqctMShgwGbFXHg-Uu2_aHmxkr_TyGRrFVpHpwVGj6lGgZb2OCfpYV/exec", {
     method: "POST",
     mode: "no-cors",
     headers: {
@@ -203,6 +250,10 @@ function submitQuiz() {
     },
     body: JSON.stringify(payload)
   });
+}
+
+function backToQuiz() {
+  window.location.href = "index.html";
 }
 
 function shuffleArray(array) {
