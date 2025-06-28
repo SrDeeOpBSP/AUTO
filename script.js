@@ -134,6 +134,24 @@ function showQuestion() {
   progress.style.width = `${((currentQuestionIndex + 1) / questionData.length) * 100}%`;
 }
 
+// Function to handle text-to-speech
+function speak(text) {
+  // Cancel any ongoing speech
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  // Set voice (use default or select a specific voice)
+  const voices = window.speechSynthesis.getVoices();
+  // Prefer an English voice (e.g., en-US or en-IN)
+  const englishVoice = voices.find(voice => voice.lang.includes('en'));
+  if (englishVoice) {
+    utterance.voice = englishVoice;
+  }
+  utterance.rate = 1.0; // Normal speed
+  utterance.pitch = 1.0; // Normal pitch
+  window.speechSynthesis.speak(utterance);
+}
+
 function handleAnswer(q, btn, letter) {
   const selectedOptionText = btn.textContent.trim();
   const correctOptionText = q["Correct Answer"].trim();
@@ -147,9 +165,15 @@ function handleAnswer(q, btn, letter) {
     explanation: q["Detailed Answer"]
   });
 
+  let feedbackText = isCorrect 
+    ? `Correct! ${q["Detailed Answer"]}`
+    : `Wrong! ${q["Detailed Answer"]}`;
   let feedbackHTML = isCorrect 
     ? `<span>😊 Correct!</span><br>${q["Detailed Answer"]}`
     : `<span>😔 Wrong!</span><br>${q["Detailed Answer"]}`;
+
+  // Trigger voice narration for the feedback
+  speak(feedbackText);
 
   if (isCorrect) {
     btn.classList.add("correct");
@@ -259,3 +283,8 @@ function backToQuiz() {
 function shuffleArray(array) {
   return array.sort(() => Math.random() - 0.5);
 }
+
+// Ensure voices are loaded before speaking (some browsers require this)
+window.speechSynthesis.onvoiceschanged = function() {
+  // Voices are now available
+};
