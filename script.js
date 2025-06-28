@@ -5,6 +5,7 @@ let score = 0;
 let selectedCrew = {};
 let userAnswers = [];
 let quizType = '';
+let hasWarnedNoHindiVoice = false; // Flag to warn about missing Hindi voice only once
 
 function loadCrew() {
   const crewIdInput = document.getElementById("crew-id");
@@ -134,22 +135,86 @@ function showQuestion() {
   progress.style.width = `${((currentQuestionIndex + 1) / questionData.length) * 100}%`;
 }
 
-// Function to handle text-to-speech
 function speak(text) {
   // Cancel any ongoing speech
   window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  // Set voice (use default or select a specific voice)
-  const voices = window.speechSynthesis.getVoices();
-  // Prefer an English voice (e.g., en-US or en-IN)
-  const englishVoice = voices.find(voice => voice.lang.includes('en'));
-  if (englishVoice) {
-    utterance.voice = englishVoice;
+  // Function to get voices with a Promise
+  function getVoices() {
+    return new Promise(resolve => {
+      let voices = window.speechSynthesis.getVoices();
+      if (voices.length) {
+        resolve(voices);
+        return;
+      }
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+        resolve(voices);
+      };
+    });
   }
-  utterance.rate = 1.0; // Normal speed
-  utterance.pitch = 1.0; // Normal pitch
-  window.speechSynthesis.speak(utterance);
+
+  // Function to detect if a segment is primarily Hindi (Devanagari script)
+  function isHindi(segment) {
+    return /[\u0900-\u097F]/.test(segment);
+  }
+
+  // Process text narration
+  getVoices().then(voices => {
+    console.log("Available voices:", voices.map(v => ({ name: v.name, lang: v.lang })));
+
+    // Check for Hindi voice
+    const hasHindiVoice = voices.some(voice => voice.lang.includes('hi'));
+    if (!hasHindiVoice && !hasWarnedNoHindiVoice) {
+      alert("No Hindi voice found. Please go to Windows Settings > Time & Language > Speech > Manage voices > Add voices, select Hindi (India), and install. Restart your browser after installation.");
+      hasWarnedNoHindiVoice = true;
+    }
+
+    // Split text into English and Hindi segments
+    const segments = text.match(/([\u0900-\u097F][\u0900-\u097F\s,.!?;:-]*[\u0900-\u097F]|[^\u0900-\u097F]+(?:\s*[^\u0900-\u097F]+)*)/g)?.filter(segment => segment.trim()) || [text];
+
+    console.log("Text segments:", segments);
+
+    segments.forEach(segment => {
+      const trimmedSegment = segment.trim();
+      if (!trimmedSegment) return;
+
+      const utterance = new SpeechSynthesisUtterance(trimmedSegment);
+      let selectedVoice = null;
+
+      if (isHindi(trimmedSegment)) {
+        selectedVoice = voices.find(voice => voice.lang.includes('hi-IN')) || voices.find(voice => voice.lang.includes('hi'));
+        utterance.rate = 0.9; // Slower for Hindi
+        utterance.pitch = 0.8; // Deeper for Hindi
+        if (!selectedVoice) {
+          console.warn(`No Hindi voice found for segment: "${trimmedSegment}". Using default voice.`);
+        }
+      } else {
+        selectedVoice = voices.find(voice => voice.lang.includes('en'));
+        utterance.rate = 1.0; // Normal speed for English
+        utterance.pitch = 1.0; // Normal pitch for English
+        if (!selectedVoice) {
+          console.warn(`No English voice found for segment: "${trimmedSegment}". Using default voice.`);
+        }
+      }
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log(`Speaking "${trimmedSegment}" with voice: ${selectedVoice.name} (${selectedVoice.lang}), rate: ${utterance.rate}, pitch: ${utterance.pitch}`);
+      } else {
+        console.log(`Speaking "${trimmedSegment}" with default voice (no language-specific voice found), rate: ${utterance.rate}, pitch: ${utterance.pitch}`);
+      }
+
+      window.speechSynthesis.speak(utterance);
+    });
+  }).catch(err => {
+    console.error("Error loading voices:", err);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    console.log(`Fallback: Speaking "${text}" with default voice, rate: 1.0, pitch: 1.0`);
+    window.speechSynthesis.speak(utterance);
+  });
 }
 
 function handleAnswer(q, btn, letter) {
@@ -283,8 +348,3 @@ function backToQuiz() {
 function shuffleArray(array) {
   return array.sort(() => Math.random() - 0.5);
 }
-
-// Ensure voices are loaded before speaking (some browsers require this)
-window.speechSynthesis.onvoiceschanged = function() {
-  // Voices are now available
-};
