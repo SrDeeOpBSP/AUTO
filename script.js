@@ -5,7 +5,6 @@ let score = 0;
 let selectedCrew = {};
 let userAnswers = [];
 let quizType = '';
-let hasWarnedNoHindiVoice = false; // Flag to warn about missing Hindi voice only once
 
 function loadCrew() {
   const crewIdInput = document.getElementById("crew-id");
@@ -162,13 +161,6 @@ function speak(text) {
   // Process text narration
   getVoices().then(voices => {
     console.log("Available voices:", voices.map(v => ({ name: v.name, lang: v.lang })));
-
-    // Check for Hindi voice
-    const hasHindiVoice = voices.some(voice => voice.lang.includes('hi'));
-    if (!hasHindiVoice && !hasWarnedNoHindiVoice) {
-      alert("No Hindi voice found. Please go to Windows Settings > Time & Language > Speech > Manage voices > Add voices, select Hindi (India), and install. Restart your browser after installation.");
-      hasWarnedNoHindiVoice = true;
-    }
 
     // Split text into English and Hindi segments
     const segments = text.match(/([\u0900-\u097F][\u0900-\u097F\s,.!?;:-]*[\u0900-\u097F]|[^\u0900-\u097F]+(?:\s*[^\u0900-\u097F]+)*)/g)?.filter(segment => segment.trim()) || [text];
