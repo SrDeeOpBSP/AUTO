@@ -229,11 +229,13 @@ function handleAnswer(q, btn, letter) {
 }
 
 function nextQuestion() {
+  window.speechSynthesis.cancel(); // Stop any ongoing speech
   currentQuestionIndex++;
   showQuestion();
 }
 
 function submitQuiz() {
+  window.speechSynthesis.cancel(); // Stop any ongoing speech
   document.getElementById("quiz-section").style.display = "none";
   document.getElementById("result-section").style.display = "block";
 
